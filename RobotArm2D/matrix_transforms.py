@@ -198,7 +198,7 @@ def get_axes_from_matrix(mat):
     x_axis_new = mat @ x_axis
     y_axis_new = mat @ y_axis
 
-    return x_axis_new, y_axis_new
+    return x_axis_new[:2], y_axis_new[:2]
 
 def get_theta_from_matrix(mat):
     """ Get the actual rotation angle from how the x-axis transforms
@@ -231,6 +231,37 @@ def check_is_rotation(mat, b_print=False):
     #       Return FALSE otherwise
     #       If b_print_test is True, also print out why the rotation matrix failed
     # YOUR CODE HERE
+
+   
+    identity_check = mat @ mat.T
+    identity = np.eye(3)
+    
+    if not np.allclose(identity_check, identity):
+
+        if b_print:
+            print(f"Matrix inverse is not its transpose")
+        return False
+
+    x_axis, y_axis = get_axes_from_matrix(mat)
+    len_x = np.linalg.norm(x_axis)
+    len_y = np.linalg.norm(y_axis)
+    dot_xy = np.dot(x_axis, y_axis)
+
+    if not np.isclose(len_x, 1.0):
+        if b_print:
+            print(f"X axis length (should be 1): {len_x}")
+        return False
+    
+    if not np.isclose(len_y, 1.0):
+        if b_print:
+            print(f"Y axis length (should be 1): {len_y}")
+        return False
+    
+    if not np.isclose(dot_xy, 0.0):
+        if b_print:
+            print(f"X and Y axes dot product (should be 0): {dot_xy}")
+        return False
+    
     return True
 
 
@@ -251,7 +282,13 @@ def check_is_mirrored(mat):
     #  Step 3: Check that the resulting vector points in the positive z direction (x and y values are 0, z is positive)
     #  Note: Only the DIRECTION matters - not how long the vector is
     # YOUR CODE HERE
-
+    x_axis, y_axis = get_axes_from_matrix(mat)
+    cross_product = np.cross(x_axis, y_axis)
+    
+    if cross_product < 0:
+        return True
+    else:
+        return False
 
 # Check if skewed/not angle-preserving
 #   Normally, robotics only uses combinations of matrices that preserve angles - i.e., the angles between two vectors
@@ -271,7 +308,14 @@ def check_preserves_angles(mat):
     #  Step 3: Check that the angle between them is 90 degrees (reminder, numpy does everything in radians)
     #    Actually, you can just check that the dot product is close to 0
     # YOUR CODE HERE
+    x_axis, y_axis = get_axes_from_matrix(mat)
 
+    angle_between = np.arccos( np.dot(x_axis, y_axis) / ( np.linalg.norm(x_axis) * np.linalg.norm(y_axis) ) )
+
+    if np.isclose(angle_between, np.pi/2):
+        return True
+    else:
+        return False
 
 # Check/test functions for autograder
 #  Nothing for you to write here, but you should understand what these routines are checking
@@ -393,6 +437,12 @@ def make_pts_representing_circle(n_pts=25):
     #   see numpy array math
     # Step 3: Do the same for the y values, but set to sin(t)
     # YOUR CODE HERE
+    pts = np.ones((3, n_pts))
+
+    pts[0, :] = np.cos(ts)
+    pts[1, :] = np.sin(ts)
+
+
     return pts
 
 
@@ -437,6 +487,7 @@ def plot_axes_and_circle(axs, mat):
 
     # GUIDE: Transform circle by mat and put new points in pts_moved
     # YOUR CODE HERE
+    pts_moved = mat @ pts
     axs.plot(pts_moved[0, :], pts_moved[1, :], ':g')
 
 
@@ -479,10 +530,19 @@ def example_order_matters():
     #   Set mat to be a translation, rotation matrix (same params as above)
     axs[0, 1].set_title("Trans rot")
     # YOUR CODE HERE
+    seq_trans_rot = [{"type":"translate", "dx": 1, "dy": 2},
+                     {"type":"rotate", "theta": np.pi/4.0}]
+    
+    mat = make_matrix_from_sequence(seq_trans_rot)
+
     plot_axes_and_circle(axs[0, 1], mat)
 
     # GUIDE Now do a matrix (mat) that is a scale 0.5,2.0, rotate pi/4, translate (1,2)
     # YOUR CODE HERE
+    seq_scl_rot_trans = [{"type":"scale", "sx": 0.5, "sy": 2.0},
+                         {"type":"rotate", "theta": np.pi/4.0},
+                         {"type":"translate", "dx": 1, "dy": 2}]
+    mat = make_matrix_from_sequence(seq_scl_rot_trans)
 
     axs[1, 0].set_title("Scl rot trans")
     plot_axes_and_circle(axs[1, 0], mat)
@@ -490,6 +550,11 @@ def example_order_matters():
     # Reverse the order of operations
     # GUIDE Now do a matrix (mat) that is the REVERSE of the scale, rotate, translate
     # YOUR CODE HERE
+    seq_trans_rot_scl = [{"type":"translate", "dx": 1, "dy": 2},
+                         {"type":"rotate", "theta": np.pi/4.0},
+                         {"type":"scale", "sx": 0.5, "sy": 2.0}]
+    mat = make_matrix_from_sequence(seq_trans_rot_scl)
+    
     axs[1, 1].set_title("Trans rot scl")
 
     plot_axes_and_circle(axs[1, 1], mat)
@@ -505,7 +570,9 @@ def example_weird_geometry():
     #  (see mirrored figure in slides https://docs.google.com/presentation/d/1iTi45y5AghMZRgStPX4mPdR7uYFQdRBjaekOW7ESTxM/edit?usp=sharing)
     # Should be a scale followed by a translate
     # YOUR CODE HERE
-
+    seq_mirrored = [{"type":"scale", "sx": 2.0, "sy": -1.0},
+                    {"type":"translate", "dx": 2.5, "dy": 2.5}]
+    
     mat = make_matrix_from_sequence(seq_mirrored)
     # print(f"{mat}")
     axs[0].set_title("Mirrored")
@@ -517,6 +584,10 @@ def example_weird_geometry():
     #  Draw the the flipped geometry at 2.5 2.5 (see skewed figure in slides https://docs.google.com/presentation/d/1iTi45y5AghMZRgStPX4mPdR7uYFQdRBjaekOW7ESTxM/edit?usp=sharing)
     # YOUR CODE HERE
 
+    seq_skew = [{"type":"rotate", "theta": np.pi/4.0},
+                {"type":"scale", "sx": 2, "sy": 0.75},
+                {"type":"translate", "dx": 2.5, "dy": 2.5}]
+    
     mat = make_matrix_from_sequence(seq_skew)
     # print(f"{mat}")
     axs[1].set_title("Skewed")
@@ -538,9 +609,31 @@ def example_uncentered_geometry():
     # Note: You can use the make_x_matrix commands to move the points
     # YOUR CODE HERE
 
+    
+    seq_lower_left = [{"type": "translate", "dx": 1, "dy": 1}]
+    mat_lower_left = make_matrix_from_sequence(seq_lower_left)
+
+    pts_circle_lower_left_origin = mat_lower_left @ pts_circle
+    pts_zigzag_lower_left_origin = mat_lower_left @ pts_zigzag
+
+   
+    seq_x_up = [{"type": "rotate", "theta": np.pi/2}]
+    mat_x_up = make_matrix_from_sequence(seq_x_up)
+
+    pts_circle_x_up = mat_x_up @ pts_circle
+    pts_zigzag_x_up = mat_x_up @ pts_zigzag
+
+    
+    seq_both = [{"type": "translate", "dx": 1, "dy": 1}]
+    mat_both = make_matrix_from_sequence(seq_both)
+
+    pts_circle_x_up_lower_left_origin = mat_both @ pts_circle
+    pts_zigzag_x_up_lower_left_origin = mat_both @ pts_zigzag
+
     seq_scl_rot_trans = [{"type":"scale", "sx":0.5, "sy":0.75},
                          {"type":"rotate", "theta": np.pi/3.0},
                          {"type":"translate", "dx": -1, "dy": 2.0}]
+    
     mat = make_matrix_from_sequence(seq_scl_rot_trans)
 
     # First plot - what happens if the circle and zig zag are centered
