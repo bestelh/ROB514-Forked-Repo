@@ -54,7 +54,8 @@ def make_translation_matrix(d_x=0.0, d_y=0.0):
     mat = np.identity(3)
     # GUIDE: set the relevant values of mat
     # YOUR CODE HERE
-
+    mat[0, 2] = d_x
+    mat[1, 2] = d_y
     return mat
 
 
@@ -67,7 +68,10 @@ def make_rotation_matrix(theta=0.0):
     mat = np.identity(3)
     # GUIDE: set the relevant values of mat
     # YOUR CODE HERE
-
+    mat[0, 0] = np.cos(theta)
+    mat[0, 1] = -np.sin(theta)
+    mat[1, 0] = np.sin(theta)
+    mat[1, 1] = np.cos(theta)
     return mat
 
 
@@ -124,6 +128,7 @@ def make_matrix_from_sequence(seq):
         # GUIDE: multiply next_mat by mat and store the result in mat
         #    (reminder: @ is matrix multiplication)
         # YOUR CODE HERE
+        mat = next_mat @ mat
     return mat
 
 
@@ -145,6 +150,15 @@ def get_sx_sy_from_matrix(mat):
     #   third coordinate, since vectors do not have a location
     # np.linalg.norm() will get the length of the vector
     # YOUR CODE HERE
+    x_axis=np.array( [1, 0, 0] )
+    y_axis=np.array( [0, 1, 0] )
+
+    x_axis_scaled = mat @ x_axis
+    y_axis_scaled = mat @ y_axis
+
+    sx = np.linalg.norm(x_axis_scaled)
+    sy = np.linalg.norm(y_axis_scaled)
+    return sx, sy
 
 
 def get_dx_dy_from_matrix(mat):
@@ -159,7 +173,12 @@ def get_dx_dy_from_matrix(mat):
     #   Multiply the origin by the matrix then return the x and y components
     # Reminder: @ is the matrix multiplication
     # YOUR CODE HERE
+    point= np.array( [0, 0, 1] )
+    point_transformed = mat @ point
 
+    dx = point_transformed[0]
+    dy = point_transformed[1]
+    return dx, dy
 
 # Doing this one in two pieces - first, get out how the axes (1,0) and (0,1) are transformed, then in the mext
 #  method get theta out of how (1,0) is transformed
@@ -173,7 +192,13 @@ def get_axes_from_matrix(mat):
     #  2) Set y_axis to be a unit vector pointing down the y axis
     #  Multiply by the matrix to get the new "x" and "y" axes
     # YOUR CODE HERE
+    x_axis = np.array( [1, 0, 0] )
+    y_axis = np.array( [0, 1, 0] )
 
+    x_axis_new = mat @ x_axis
+    y_axis_new = mat @ y_axis
+
+    return x_axis_new, y_axis_new
 
 def get_theta_from_matrix(mat):
     """ Get the actual rotation angle from how the x-axis transforms
@@ -186,7 +211,9 @@ def get_theta_from_matrix(mat):
     #   Use the x axis because theta for the x axis is 0 (makes the math easier)
     # Reminder: arctan2 takes (y, x)
     # YOUR CODE HERE
-
+    x_axis= get_axes_from_matrix(mat)[0]
+    theta = np.arctan2(x_axis[1], x_axis[0])
+    return theta
 
 # -------------------------------- Check and test routines ------------------------------
 def check_is_rotation(mat, b_print=False):
