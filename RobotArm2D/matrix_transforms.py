@@ -40,7 +40,8 @@ def make_scale_matrix(scale_x=1.0, scale_y=1.0):
     mat = np.identity(3)
     # GUIDE: set the relevant values of mat
     # YOUR CODE HERE
-
+    mat[0, 0] = scale_x
+    mat[1, 1] = scale_y
     return mat
 
 
