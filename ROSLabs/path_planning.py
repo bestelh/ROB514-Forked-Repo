@@ -11,6 +11,7 @@
 # Slides https://docs.google.com/presentation/d/1XBPw2B2Bac-LcXH5kYN4hQLLLl_AMIgoowlrmPpTinA/edit?usp=sharing
 
 # The ever-present numpy
+from importlib.resources import path
 import numpy as np
 
 # Our priority queue
@@ -100,6 +101,11 @@ def is_free(im, pix):
         return True
     return False
 
+def in_image(im, pix):
+    if 0 <= pix[0] < im.shape[1] and 0 <= pix[1] < im.shape[0]:
+        return True
+    return False
+
 
 def convert_image(im, wall_threshold, free_threshold):
     """ Convert the image to a thresholded image with 'not seen' pixels marked
@@ -148,6 +154,7 @@ def eight_connected(pix):
                 pass
             ret = pix[0] + indx, pix[1] + j
             yield ret
+
 
 
 def dijkstra(im, robot_loc, goal_loc):
@@ -205,11 +212,50 @@ def dijkstra(im, robot_loc, goal_loc):
         #  https://docs.google.com/presentation/d/1pt8AcSKS2TbKpTAVV190pRHgS_M38ldtHQHIltcYH6Y/edit#slide=id.g18d0c3a1e7d_0_0
         # YOUR CODE HERE
 
+        # Step 1
+        if current_node_ij == goal_loc:
+            break
+
+        # Step 2
+        if visited_closed_yn:
+            continue
+
+        #Step 3
+        visited[current_node_ij] = (visited_distance, visited_parent, True)
+
+        for neighbor in eight_connected(current_node_ij):
+            
+            # Neighbor checks
+            if is_wall(im, neighbor):
+                continue
+
+            if is_unseen(im, neighbor):
+                continue
+
+            if is_free(im, neighbor) == False:
+                continue
+            
+            if in_image(im, neighbor) == False: #wrote new in image function
+                continue
+
+            # Find distance to next neightbor   
+            dist_i = neighbor[0] - current_node_ij[0]
+            dist_j = neighbor[1] - current_node_ij[1]
+            neighbor_distance = np.sqrt(dist_i ** 2 + dist_j ** 2)
+
+            new_distance = distance_to_current_node + neighbor_distance
+        
+            if neighbor not in visited or new_distance < visited[neighbor][0]:
+                visited[neighbor] = (new_distance, current_node_ij, False)
+                heapq.heappush(priority_queue, (new_distance, neighbor))
+
+
     # Now check that we actually found the goal node
     try_2 = goal_loc
-    if not goal_loc in visited:
+    if try_2 in visited == False:
         # GUIDE: Deal with not being able to get to the goal loc
         # YOUR CODE HERE
+        print(f"{try_2} is not reachable from {robot_loc}.")
         raise ValueError(f"Goal {goal_loc} not reached")
         return []
 
@@ -217,6 +263,23 @@ def dijkstra(im, robot_loc, goal_loc):
     path.append(goal_loc)
     # GUIDE: Build the path by starting at the goal node and working backwards
     # YOUR CODE HERE
+
+    current = goal_loc
+
+    while (current == robot_loc) == False:
+        # if current not in visited:
+        #     return []  
+        
+        parent = visited[current][1]
+
+        if parent is None:
+            return [] 
+        
+        path.append(parent)
+        current = parent
+
+    path.reverse()
+
 
     return path
 
