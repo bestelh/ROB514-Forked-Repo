@@ -92,22 +92,24 @@ def read_and_cluster_image(image_name, use_hsv, n_clusters):
     # Step 5
     ids, _ = vq(data_whitened, centers)
 
-    # Step 6
+    # Masking
     mask_rgb = np.zeros((w * h, 3), dtype=np.uint8)
     mask_cluster_avg = np.zeros((w * h, 3), dtype=np.uint8)
 
     for i in range(n_clusters):
+
         mask_rgb[ids == i] = rgb_color[i]
+
         cluster_mean = np.mean(im_orig.reshape((w * h, 3))[ids == i], axis=0)
         mask_cluster_avg[ids == i] = cluster_mean
 
-    # Reshape masks back to image dimensions
+   
     mask_rgb = mask_rgb.reshape((w, h, 3))
     mask_cluster_avg = mask_cluster_avg.reshape((w, h, 3))
-    # Display the masks
+
+   
     axs[1].imshow(mask_rgb)
     axs[2].imshow(mask_cluster_avg)
-
     axs[1].set_title("ID colored by rgb")
     axs[2].set_title("ID colored by cluster average")
 
