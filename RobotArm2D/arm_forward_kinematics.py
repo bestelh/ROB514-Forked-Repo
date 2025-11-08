@@ -278,14 +278,13 @@ def get_matrix_link(arm_link):
     #    Rotate first, then translate
     # YOUR CODE HERE
 
-    # Find where the end of the link (1,0) goes after both Matrix transformation AND rotation by Angle
+    
     end_point = np.array([1.0, 0.0, 1.0])
-    # First apply the link's matrix transformation, then rotate by the link's angle
+   
     full_transform = mt.make_rotation_matrix(arm_link["Angle"]) @ arm_link["Matrix"]
     transformed_end = full_transform @ end_point
     dx, dy = transformed_end[0], transformed_end[1]
 
-    # The next link should start at this position, rotated by the same angle as this link
     matrix = mt.make_translation_matrix(dx, dy) @ mt.make_rotation_matrix(arm_link["Angle"])
     return matrix
 
