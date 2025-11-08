@@ -117,6 +117,16 @@ def get_pts_as_numpy_array(obj):
     @return numpy array of XYs"""
     pts = None
     # YOUR CODE HERE
+    if "XYs" in obj and obj["XYs"]:
+    
+        xy_list = obj["XYs"]
+        num_points = len(xy_list)
+        pts = np.ones((3, num_points))
+        
+        for i, (x, y) in enumerate(xy_list):
+            pts[0, i] = x  
+            pts[1, i] = y  
+        
     return pts
 
 
