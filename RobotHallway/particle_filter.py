@@ -31,6 +31,7 @@ class ParticleFilter:
         #  Step 2: create n_samples of uniform weights
         # YOUR CODE HERE
 
+        
     def update_particles_move_continuous(self, robot_ground_truth, amount):
         """ Update state estimation based on sensor reading
         Lec 4.1 particle filters
