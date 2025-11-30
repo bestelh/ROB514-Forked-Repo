@@ -108,20 +108,14 @@ def is_reachable(im, pix):
     x, y = pix
     h, w = im.shape
 
-    # Out-of-bounds pixel is not reachable
     if not (0 <= x < w and 0 <= y < h):
         return False
 
-    # 8-connected neighbors (mirrors eight_connected generator)
-    for dx in range(-1, 2):
-        for dy in range(-1, 2):
-            # skip center
-            if dx == 0 and dy == 0:
-                continue
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < w and 0 <= ny < h:
-                if im[ny, nx] == 0:
-                    return True
+    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < w and 0 <= ny < h:
+            if im[ny, nx] == 0:
+                return True
 
     return False
 
@@ -146,9 +140,9 @@ def find_all_possible_goals(im):
     for y in range(1, h-1):
         for x in range(1, w-1):
 
-            # processed += 1
-            # if processed % report_every == 0:
-                #print(f"Processed {processed} pixels...", flush=True)
+            processed += 1
+            if processed % report_every == 0:
+                print(f"Processed {processed} pixels...", flush=True)
 
             v = im[y, x]
 
