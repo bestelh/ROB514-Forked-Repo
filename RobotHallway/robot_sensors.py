@@ -30,6 +30,7 @@ class RobotSensors:
         self.set_door_sensor_probabilities()
         self.set_distance_wall_sensor_probabilities()
 
+
     def set_door_sensor_probabilities(self, in_prob_see_door_if_door=0.8, in_prob_see_door_if_not_door=0.1):
         """ Set the two door probabilities.
         @param in_prob_see_door_if_door - probability of seeing a door if there is one

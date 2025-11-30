@@ -8,6 +8,7 @@ from robot_sensors import RobotSensors
 from robot_ground_truth import RobotGroundTruth
 
 
+
 # State estimation using Kalman filter
 #   Stores the belief about the robot's location as a Gaussian
 #     See the probability_sampling assignment, gaussian, for how to implement store probability as a Gaussian

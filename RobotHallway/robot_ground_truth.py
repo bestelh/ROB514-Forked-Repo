@@ -24,6 +24,7 @@ import numpy as np
 #  move_continuous is a version of the gaussian sampling. This is used for the Kalman filter/particle filter part of
 #   the assignment
 #
+
 class RobotGroundTruth:
     def __init__(self):
         # Where the robot actually is
