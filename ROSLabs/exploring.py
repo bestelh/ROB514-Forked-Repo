@@ -136,47 +136,41 @@ def find_all_possible_goals(im):
     h, w = im.shape
     candidates = []
 
-    WALL = 20
-    FREE = 240
+    #grayscale adjustment values 
+    wall = 20
+    free = 240
 
     processed = 0
     report_every = 100000
-    total_pixels = h * w
 
     for y in range(1, h-1):
         for x in range(1, w-1):
 
-            processed += 1
-            if processed % report_every == 0:
-                print(f"Processed {processed}/{total_pixels} pixels...", flush=True)
+            # processed += 1
+            # if processed % report_every == 0:
+                #print(f"Processed {processed} pixels...", flush=True)
 
             v = im[y, x]
 
             # only grey (unexplored)
-            if v <= WALL or v >= FREE:
+            if v <= wall or v >= free:
+                continue
+            
+            if not (im[y-1, x] >= free or
+                im[y+1, x] >= free or
+                im[y, x-1] >= free or
+                im[y, x+1] >= free):
                 continue
 
-            # require a free neighbor (4-connected)
-            if not (
-                im[y-1, x] >= FREE or
-                im[y+1, x] >= FREE or
-                im[y, x-1] >= FREE or
-                im[y, x+1] >= FREE
-            ):
-                continue
-
-            # reject if right next to a wall (4-connected)
-            if (
-                im[y-1, x] <= WALL or
-                im[y+1, x] <= WALL or
-                im[y, x-1] <= WALL or
-                im[y, x+1] <= WALL
-            ):
+            if (im[y-1, x] <= wall or
+                im[y+1, x] <= wall or
+                im[y, x-1] <= wall or
+                im[y, x+1] <= wall):
                 continue
 
             candidates.append((x, y))
 
-    print(f"Done! Processed {processed}/{total_pixels} pixels. Found {len(candidates)} candidates.")
+    #print(f"Processed {processed} pixels")
 
     return candidates
 
@@ -190,11 +184,10 @@ def find_best_point(im, possible_points, robot_loc):
     if not possible_points:
             return None
 
-    pts = set(possible_points)   # fast membership check
+    pts = set(possible_points)   
     visited = set()
     clusters = []
 
-    # 8-connected neighborhood
     dirs = [(-1, -1), (-1, 0), (-1, 1),
             (0, -1),          (0, 1),
             (1, -1),  (1, 0), (1, 1)]
@@ -203,7 +196,6 @@ def find_best_point(im, possible_points, robot_loc):
         if p in visited:
             continue
 
-        # Use list as a queue (pop from end for DFS)
         stack = [p]
         visited.add(p)
         cluster = [p]
@@ -221,10 +213,10 @@ def find_best_point(im, possible_points, robot_loc):
 
         clusters.append(cluster)
 
-    # pick the largest cluster
+    # find the biggest cluster
     largest = max(clusters, key=len)
 
-    # compute centroid of largest cluster
+    # Fnd its center
     xs = [p[0] for p in largest]
     ys = [p[1] for p in largest]
     cx = int(np.mean(xs))
@@ -243,49 +235,28 @@ def find_waypoints(im, path):
     # YOUR CODE HERE
     if not path:
         return []
+    
+    if len(path) <= 2:
+        return path[:]
 
-    # Parameters you can tweak
-    max_step = 50.0        # max distance (pixels) between waypoints on a straight line
-    dir_cos_thresh = 0.995 # cos(angle) threshold to detect a meaningful direction change (~~5 deg)
+    waypoints = [path[0]]
+    
+    #Checking to see when direction changes to add waypoint
 
-    waypoints = [tuple(path[0])]
-    if len(path) == 1:
-        return waypoints
-
-    accum_dist = 0.0
-    prev_dir = None
-
-    for i in range(1, len(path)):
-        p_prev = np.array(path[i - 1], dtype=float)
-        p_cur = np.array(path[i], dtype=float)
-
-        seg = p_cur - p_prev
-        seg_len = np.linalg.norm(seg)
-        if seg_len == 0:
-            continue
-        seg_dir = seg / seg_len
-
-        if prev_dir is None:
-            prev_dir = seg_dir
-
-        accum_dist += seg_len
-
-        # If direction changed enough or accumulated distance exceeded limit, add waypoint at previous point
-        if np.dot(seg_dir, prev_dir) < dir_cos_thresh or accum_dist >= max_step:
-            candidate = tuple(int(x) for x in path[i - 1])
-            if candidate != waypoints[-1]:
-                waypoints.append(candidate)
-            accum_dist = 0.0
-            prev_dir = None
-        else:
-            prev_dir = seg_dir
-
-    # Always include final goal
-    final_pt = tuple(int(x) for x in path[-1])
-    if final_pt != waypoints[-1]:
-        waypoints.append(final_pt)
-
+    for i in range(1, len(path) - 1):
+        dx1 = path[i][0] - path[i - 1][0]
+        dy1 = path[i][1] - path[i - 1][1]
+        dx2 = path[i + 1][0] - path[i][0]
+        dy2 = path[i + 1][1] - path[i][1]
+        
+        if (dx1, dy1) != (dx2, dy2):
+            
+            waypoints.append(path[i])
+            
+    waypoints.append(path[-1])
+    
     return waypoints
+
 
 if __name__ == '__main__':
     im, im_thresh = path_planning.open_image("map.pgm")
