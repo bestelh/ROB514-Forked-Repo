@@ -88,6 +88,11 @@ class RobotGroundTruth:
         # Check that sigma is positive
 
         # YOUR CODE HERE
+        if sigma <= 0:
+            raise ValueError("Sigma must be positive")
+
+        self.move_probabilities["move_continuous"] = {"sigma": sigma}
+
 
     # Just a helper function to place robot in middle of bin
     def _adjust_middle_of_bin(self, n_divs):
@@ -164,7 +169,10 @@ class RobotGroundTruth:
         noisy_amount = amount
 
         # YOUR CODE HERE
-
+        sigma = self.move_probabilities["move_continuous"]["sigma"]
+        noise = np.random.normal(0, sigma)
+        noisy_amount += noise
+    
         # Actually move (don't run off of end)
         return self._move_clamped_continuous(noisy_amount)
 

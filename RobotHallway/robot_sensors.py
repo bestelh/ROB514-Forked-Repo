@@ -23,14 +23,14 @@ class RobotSensors:
         # Note: The actual values in the dictionaries will be set in the calls to set_* below
         # Second note: all variables should be referenced with self. or they will disappear
         # YOUR CODE HERE
-
+        self.sensor_probabilities = {"door": {}, "no_door": {}, "distance_wall": {}}
         # In the GUI version, these will be called with values from the GUI after the RobotSensors instance
         #   has been created
         # Actually SET the values for the dictionaries
-        self.set_door_sensor_probabilites()
+        self.set_door_sensor_probabilities()
         self.set_distance_wall_sensor_probabilities()
 
-    def set_door_sensor_probabilites(self, in_prob_see_door_if_door=0.8, in_prob_see_door_if_not_door=0.1):
+    def set_door_sensor_probabilities(self, in_prob_see_door_if_door=0.8, in_prob_see_door_if_not_door=0.1):
         """ Set the two door probabilities.
         @param in_prob_see_door_if_door - probability of seeing a door if there is one
         @param in_prob_see_door_if_not_door - probability of seeing a door if there is NOT one
@@ -49,6 +49,7 @@ class RobotSensors:
         # Kalman assignment
         # TODO: Store the mean and standard deviation
         # YOUR CODE HERE
+        self.sensor_probabilities["distance_wall"] = {"sigma": sigma}
 
     def query_door(self, robot_gt, world_gt):
         """ Query the door sensor
@@ -83,6 +84,12 @@ class RobotSensors:
         # TODO: Return the distance to the wall (with noise)
         #  This is the Gaussian assignment from your probabilities homework
         # YOUR CODE HERE
+        params = self.sensor_probabilities["distance_wall"]
+        sigma = params["sigma"]
+
+        true_distance = robot_gt.robot_loc
+        noisy_measurement = true_distance + np.random.normal(0, sigma)
+        return noisy_measurement
 
 
 def test_discrete_sensors(b_print=True):
