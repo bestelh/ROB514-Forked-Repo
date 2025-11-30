@@ -140,9 +140,9 @@ def find_all_possible_goals(im):
     for y in range(1, h-1):
         for x in range(1, w-1):
 
-            processed += 1
-            if processed % report_every == 0:
-                print(f"Processed {processed} pixels...", flush=True)
+            # processed += 1
+            # if processed % report_every == 0:
+            #     print(f"Processed {processed} pixels...", flush=True)
 
             v = im[y, x]
 
