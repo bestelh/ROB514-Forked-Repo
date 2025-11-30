@@ -105,8 +105,25 @@ def is_reachable(im, pix):
     #  False otherwise
     # You can use four or eight connected - eight will return more points
     # YOUR CODE HERE
-    return False
+    x, y = pix
+    h, w = im.shape
 
+    # Out-of-bounds pixel is not reachable
+    if not (0 <= x < w and 0 <= y < h):
+        return False
+
+    # 8-connected neighbors (mirrors eight_connected generator)
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            # skip center
+            if dx == 0 and dy == 0:
+                continue
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < w and 0 <= ny < h:
+                if im[ny, nx] == 0:
+                    return True
+
+    return False
 
 def find_all_possible_goals(im):
     """ Find all of the places where you have a pixel that is unseen next to a pixel that is free
@@ -116,6 +133,52 @@ def find_all_possible_goals(im):
     @return dictionary or list or binary image of possible pixels"""
 
     # YOUR CODE HERE
+    h, w = im.shape
+    candidates = []
+
+    WALL = 20
+    FREE = 240
+
+    processed = 0
+    report_every = 100000
+    total_pixels = h * w
+
+    for y in range(1, h-1):
+        for x in range(1, w-1):
+
+            processed += 1
+            if processed % report_every == 0:
+                print(f"Processed {processed}/{total_pixels} pixels...", flush=True)
+
+            v = im[y, x]
+
+            # only grey (unexplored)
+            if v <= WALL or v >= FREE:
+                continue
+
+            # require a free neighbor (4-connected)
+            if not (
+                im[y-1, x] >= FREE or
+                im[y+1, x] >= FREE or
+                im[y, x-1] >= FREE or
+                im[y, x+1] >= FREE
+            ):
+                continue
+
+            # reject if right next to a wall (4-connected)
+            if (
+                im[y-1, x] <= WALL or
+                im[y+1, x] <= WALL or
+                im[y, x-1] <= WALL or
+                im[y, x+1] <= WALL
+            ):
+                continue
+
+            candidates.append((x, y))
+
+    print(f"Done! Processed {processed}/{total_pixels} pixels. Found {len(candidates)} candidates.")
+
+    return candidates
 
 
 def find_best_point(im, possible_points, robot_loc):
@@ -124,7 +187,50 @@ def find_best_point(im, possible_points, robot_loc):
     @param possible_points - possible points to chose from
     @param robot_loc - location of the robot (in case you want to factor that in)
     """
-    # YOUR CODE HERE
+    if not possible_points:
+            return None
+
+    pts = set(possible_points)   # fast membership check
+    visited = set()
+    clusters = []
+
+    # 8-connected neighborhood
+    dirs = [(-1, -1), (-1, 0), (-1, 1),
+            (0, -1),          (0, 1),
+            (1, -1),  (1, 0), (1, 1)]
+
+    for p in possible_points:
+        if p in visited:
+            continue
+
+        # Use list as a queue (pop from end for DFS)
+        stack = [p]
+        visited.add(p)
+        cluster = [p]
+
+        while stack:
+            x, y = stack.pop()
+
+            for dx, dy in dirs:
+                nx, ny = x + dx, y + dy
+
+                if (nx, ny) in pts and (nx, ny) not in visited:
+                    visited.add((nx, ny))
+                    stack.append((nx, ny))
+                    cluster.append((nx, ny))
+
+        clusters.append(cluster)
+
+    # pick the largest cluster
+    largest = max(clusters, key=len)
+
+    # compute centroid of largest cluster
+    xs = [p[0] for p in largest]
+    ys = [p[1] for p in largest]
+    cx = int(np.mean(xs))
+    cy = int(np.mean(ys))
+
+    return (cx, cy)
 
 
 def find_waypoints(im, path):
@@ -135,6 +241,51 @@ def find_waypoints(im, path):
 
     # Again, no right answer here
     # YOUR CODE HERE
+    if not path:
+        return []
+
+    # Parameters you can tweak
+    max_step = 50.0        # max distance (pixels) between waypoints on a straight line
+    dir_cos_thresh = 0.995 # cos(angle) threshold to detect a meaningful direction change (~~5 deg)
+
+    waypoints = [tuple(path[0])]
+    if len(path) == 1:
+        return waypoints
+
+    accum_dist = 0.0
+    prev_dir = None
+
+    for i in range(1, len(path)):
+        p_prev = np.array(path[i - 1], dtype=float)
+        p_cur = np.array(path[i], dtype=float)
+
+        seg = p_cur - p_prev
+        seg_len = np.linalg.norm(seg)
+        if seg_len == 0:
+            continue
+        seg_dir = seg / seg_len
+
+        if prev_dir is None:
+            prev_dir = seg_dir
+
+        accum_dist += seg_len
+
+        # If direction changed enough or accumulated distance exceeded limit, add waypoint at previous point
+        if np.dot(seg_dir, prev_dir) < dir_cos_thresh or accum_dist >= max_step:
+            candidate = tuple(int(x) for x in path[i - 1])
+            if candidate != waypoints[-1]:
+                waypoints.append(candidate)
+            accum_dist = 0.0
+            prev_dir = None
+        else:
+            prev_dir = seg_dir
+
+    # Always include final goal
+    final_pt = tuple(int(x) for x in path[-1])
+    if final_pt != waypoints[-1]:
+        waypoints.append(final_pt)
+
+    return waypoints
 
 if __name__ == '__main__':
     im, im_thresh = path_planning.open_image("map.pgm")
