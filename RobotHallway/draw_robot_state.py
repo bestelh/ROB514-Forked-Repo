@@ -284,8 +284,8 @@ class StateEstimationGUI(QMainWindow):
         self.setWindowTitle('State Estimation')
 
         # Set this to whichever homework you're doing
-        self.which_filter = "Bayes"
-        # self.which_filter = "Kalman"
+        #self.which_filter = "Bayes"
+        self.which_filter = "Kalman"
         # self.which_filter = "Particle"
 
         # Control buttons for the interface
@@ -477,7 +477,7 @@ class StateEstimationGUI(QMainWindow):
             self.robot_scene.robot_ground_truth.set_move_right_probabilities(self.prob_move_left_if_right.value(),
                                                                              self.prob_move_right_if_right.value())
         if self.which_filter != "Kalman":
-            self.robot_scene.robot_sensors.set_door_sensor_probabilites(self.prob_see_door_if_door.value(),
+            self.robot_scene.robot_sensors.set_door_sensor_probabilities(self.prob_see_door_if_door.value(),
                                                                         self.prob_see_door_if_not_door.value())
         if self.which_filter != "Bayes":
             self.robot_scene.robot_ground_truth.set_move_continuos_probabilities(self.prob_move_sigma.value())

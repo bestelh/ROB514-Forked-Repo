@@ -38,6 +38,16 @@ class KalmanFilter:
 
         # TODO: Calculate C and K, then update self.mu and self.sigma
         # YOUR CODE HERE
+        sigma_measurement = robot_sensors.sensor_probabilities["distance_wall"]["sigma"]
+
+        R= sigma_measurement
+        C = 1.0
+        Q= R
+
+        K = (self.sigma * C) / (C * self.sigma * C + Q)
+        self.mu = self.mu + K * (dist_reading - C * self.mu)
+        self.sigma = (1 - K * C) * self.sigma
+
         return self.mu, self.sigma
 
     # Given a movement, update Gaussian
@@ -52,6 +62,17 @@ class KalmanFilter:
 
         # TODO: Update mu and sigma by Ax + Bu equation
         # YOUR CODE HERE
+        sigma_move = robot_ground_truth.move_probabilities["move_continuous"]["sigma"]
+        
+        Q= sigma_move
+        R=Q
+        A=1
+        B=1
+        A_T=A
+
+        self.mu = A * self.mu + B * amount 
+        self.sigma = A * self.sigma * A_T + R
+
         return self.mu, self.sigma
 
     def one_full_update(self, robot_ground_truth, robot_sensor, u: float, z: float):
@@ -70,7 +91,10 @@ class KalmanFilter:
         #  Step 1 predict: update your belief by the action (move the Gaussian)
         #  Step 2 correct: do the correction step (move the Gaussian to be between the current mean and the sensor reading)
         # YOUR CODE HERE
+        self.update_continuous_move(robot_ground_truth, u)
+        self.update_belief_distance_sensor(robot_sensor, z)
 
+        return self.mu, self.sigma
 
 
 
