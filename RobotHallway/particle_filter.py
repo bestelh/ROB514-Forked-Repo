@@ -30,6 +30,9 @@ class ParticleFilter:
         #  Step 1: create n_samples of the state space, uniformly distributed
         #  Step 2: create n_samples of uniform weights
         # YOUR CODE HERE
+        state_space_samples = np.random.uniform(0.0, 1.0, n_samples)
+        self.particles = state_space_samples
+        self.weights = np.ones(n_samples) / n_samples
 
         
     def update_particles_move_continuous(self, robot_ground_truth, amount):
@@ -46,6 +49,26 @@ class ParticleFilter:
         #   If it runs into a wall, offset it from the wall by a random amount
         # YOUR CODE HERE
         # print(f"CL {count_off_left_wall} CR {count_off_right_wall}")
+        X= robot_ground_truth.move_probabilities["move_continuous"]["sigma"]
+
+        count_off_left_wall = 0
+        count_off_right_wall = 0
+
+        for i in range(len(self.particles)):
+            
+            noise = np.random.normal(0, X)
+            new_particle_position = self.particles[i] + amount + noise
+
+            if new_particle_position <= 0.0:
+                self.particles[i] = np.random.uniform(0.0, 0.05)
+                count_off_left_wall += 1
+            elif new_particle_position >= 1.0:
+                self.particles[i] = np.random.uniform(0.95, 1.0)
+                count_off_right_wall += 1
+            else:
+                self.particles[i] = new_particle_position
+        print(f"CL {count_off_left_wall} CR {count_off_right_wall}")
+        
 
     def calculate_weights_door_sensor_reading(self, world_ground_truth, robot_sensor, sensor_reading):
         """ Update your weights based on the sensor reading being true (door) or false (no door)
@@ -73,6 +96,15 @@ class ParticleFilter:
         # will NOT set the weight in self.weights to the value to 3
 
         # YOUR CODE HERE
+        for i, p in enumerate(self.particles):
+            p_x=1/len(self.particles)
+
+            # finidng p(y|x)
+            
+
+            
+            
+
 
     def calculate_weights_distance_wall(self, robot_sensors, dist_reading):
         """ Calculate weights based on distance reading
